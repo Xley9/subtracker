@@ -3,36 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SubTracker — Behalte den Überblick über all deine Abos. Kostenlos, privat, keine Registrierung.">
+    <meta name="description" content="SubTracker — Keep track of all your subscriptions. Free, private, no sign-up required.">
     <meta name="theme-color" content="#6C63FF">
-    <title>SubTracker — Dein Abo-Überblick</title>
+    <title>SubTracker — Subscription Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 </head>
 <body>
     <div id="app">
-        <!-- Onboarding (wird nur beim ersten Besuch angezeigt) -->
+        <!-- Onboarding -->
         <div id="onboarding" class="onboarding hidden">
             <div class="onboarding-card">
-                <h1>Willkommen bei SubTracker</h1>
-                <p>Behalte den Überblick über all deine Abos — einfach, privat und kostenlos.</p>
+                <h1 data-i18n="welcomeTitle">Willkommen bei SubTracker</h1>
+                <p data-i18n="welcomeText">Behalte den Überblick über all deine Abos — einfach, privat und kostenlos.</p>
                 <div class="onboarding-steps">
                     <div class="step">
                         <span class="step-icon">➕</span>
-                        <span>Abo hinzufügen</span>
+                        <span data-i18n="step1">Abo hinzufügen</span>
                     </div>
                     <div class="step">
                         <span class="step-icon">📊</span>
-                        <span>Kosten im Blick</span>
+                        <span data-i18n="step2">Kosten im Blick</span>
                     </div>
                     <div class="step">
                         <span class="step-icon">🔔</span>
-                        <span>Erinnerungen erhalten</span>
+                        <span data-i18n="step3">Erinnerungen erhalten</span>
                     </div>
                 </div>
-                <button id="onboarding-start" class="btn btn-primary">Los geht's</button>
-                <p class="privacy-note">Alle Daten bleiben auf deinem Gerät. Keine Registrierung nötig.</p>
+                <button id="onboarding-start" class="btn btn-primary" data-i18n="letsGo">Los geht's</button>
+                <p class="privacy-note" data-i18n="privacyNote">Alle Daten bleiben auf deinem Gerät. Keine Registrierung nötig.</p>
             </div>
         </div>
 
@@ -42,120 +45,143 @@
                 <h1 class="logo">SubTracker</h1>
             </div>
             <div class="header-right">
-                <button id="theme-toggle" class="btn-icon" title="Theme wechseln">🌙</button>
-                <button id="lang-toggle" class="btn-icon" title="Sprache wechseln">DE</button>
-                <button id="settings-toggle" class="btn-icon" title="Einstellungen">⚙️</button>
+                <button id="theme-toggle" class="btn-icon" title="Theme">🌙</button>
+                <button id="lang-toggle" class="btn-icon" title="Language">🌐</button>
+                <button id="settings-toggle" class="btn-icon" title="Settings">⚙️</button>
             </div>
         </header>
 
         <!-- Dashboard -->
         <main class="main">
-            <!-- Kosten-Übersicht -->
+            <!-- Summary -->
             <section class="summary">
                 <div class="summary-card">
-                    <span class="summary-label">Monatlich</span>
+                    <span class="summary-label" data-i18n="monthly">Monatlich</span>
                     <span id="monthly-cost" class="summary-value">0,00 €</span>
                 </div>
                 <div class="summary-card">
-                    <span class="summary-label">Jährlich</span>
+                    <span class="summary-label" data-i18n="yearly">Jährlich</span>
                     <span id="yearly-cost" class="summary-value">0,00 €</span>
                 </div>
                 <div class="summary-card">
-                    <span class="summary-label">Aktive Abos</span>
+                    <span class="summary-label" data-i18n="activeSubs">Aktive Abos</span>
                     <span id="sub-count" class="summary-value">0</span>
                 </div>
             </section>
 
-            <!-- Nächste Verlängerung -->
+            <!-- Next Renewal -->
             <section id="next-renewal" class="next-renewal hidden">
-                <p>Nächste Verlängerung: <strong id="next-renewal-text"></strong></p>
+                <span class="next-renewal-icon">🔔</span>
+                <p><span data-i18n="nextRenewal">Nächste Verlängerung</span>: <strong id="next-renewal-text"></strong></p>
             </section>
 
-            <!-- Abo-Liste -->
+            <!-- Search -->
+            <section class="search-bar">
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Abos durchsuchen...">
+                </div>
+            </section>
+
+            <!-- Subscription List -->
             <section class="sub-list">
                 <div class="sub-list-header">
-                    <h2>Deine Abos</h2>
-                    <button id="add-sub-btn" class="btn btn-primary">+ Abo hinzufügen</button>
+                    <h2 data-i18n="yourSubs">Deine Abos</h2>
+                    <button id="add-sub-btn" class="btn btn-primary" data-i18n="addSub">+ Abo hinzufügen</button>
                 </div>
                 <div id="subscriptions" class="subscriptions">
-                    <!-- Abos werden hier dynamisch eingefügt -->
                     <div id="empty-state" class="empty-state">
-                        <p>Noch keine Abos vorhanden.</p>
-                        <p>Klicke auf <strong>"+ Abo hinzufügen"</strong> um zu starten.</p>
+                        <div class="empty-state-icon">📋</div>
+                        <p data-i18n="noSubs">Noch keine Abos vorhanden.</p>
+                        <p data-i18n-html="noSubsHint">Klicke auf <strong>"+ Abo hinzufügen"</strong> um zu starten.</p>
                     </div>
                 </div>
             </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                SubTracker — Open Source & Free · <a href="https://github.com/Xley9/subtracker" target="_blank">GitHub</a>
+            </footer>
         </main>
 
-        <!-- Modal: Abo hinzufügen/bearbeiten -->
+        <!-- Modal: Add/Edit -->
         <div id="modal" class="modal hidden">
             <div class="modal-overlay"></div>
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="modal-title">Abo hinzufügen</h2>
+                    <h2 id="modal-title" data-i18n="addSubTitle">Abo hinzufügen</h2>
                     <button id="modal-close" class="btn-icon">✕</button>
                 </div>
 
-                <!-- Vorlagen -->
                 <div id="templates-section" class="templates-section">
-                    <p class="templates-label">Beliebte Dienste:</p>
+                    <p class="templates-label" data-i18n="popularServices">Beliebte Dienste:</p>
+                    <div class="template-search">
+                        <input type="text" id="template-search" placeholder="🔍 Suche...">
+                    </div>
                     <div id="templates" class="templates"></div>
                 </div>
 
                 <form id="sub-form" class="sub-form">
                     <div class="form-group">
-                        <label for="sub-name">Name *</label>
-                        <input type="text" id="sub-name" placeholder="z.B. Netflix" required>
+                        <label for="sub-name" data-i18n="name">Name</label>
+                        <input type="text" id="sub-name" data-i18n-placeholder="namePlaceholder" placeholder="z.B. Netflix" required>
                     </div>
                     <div class="form-group">
-                        <label for="sub-price">Preis *</label>
+                        <label for="sub-price" data-i18n="price">Preis</label>
                         <input type="number" id="sub-price" placeholder="12.99" step="0.01" min="0" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="sub-cycle">Zyklus</label>
+                            <label for="sub-cycle" data-i18n="cycle">Zyklus</label>
                             <select id="sub-cycle">
-                                <option value="monthly">Monatlich</option>
-                                <option value="yearly">Jährlich</option>
-                                <option value="weekly">Wöchentlich</option>
-                                <option value="quarterly">Vierteljährlich</option>
+                                <option value="monthly" data-i18n="monthly_cycle">Monatlich</option>
+                                <option value="yearly" data-i18n="yearly_cycle">Jährlich</option>
+                                <option value="weekly" data-i18n="weekly">Wöchentlich</option>
+                                <option value="quarterly" data-i18n="quarterly">Vierteljährlich</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="sub-currency">Währung</label>
+                            <label for="sub-currency" data-i18n="currency">Währung</label>
                             <select id="sub-currency">
                                 <option value="EUR">€ EUR</option>
                                 <option value="USD">$ USD</option>
                                 <option value="GBP">£ GBP</option>
                                 <option value="TRY">₺ TRY</option>
                                 <option value="CHF">CHF</option>
+                                <option value="JPY">¥ JPY</option>
+                                <option value="PLN">zł PLN</option>
+                                <option value="SEK">kr SEK</option>
+                                <option value="CAD">C$ CAD</option>
+                                <option value="AUD">A$ AUD</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="sub-date">Nächste Verlängerung</label>
+                        <label for="sub-date" data-i18n="nextRenewalDate">Nächste Verlängerung</label>
                         <input type="date" id="sub-date">
                     </div>
                     <div class="form-group">
-                        <label for="sub-category">Kategorie</label>
+                        <label for="sub-category" data-i18n="category">Kategorie</label>
                         <select id="sub-category">
-                            <option value="streaming">Streaming</option>
-                            <option value="music">Musik</option>
-                            <option value="software">Software</option>
-                            <option value="gaming">Gaming</option>
-                            <option value="fitness">Fitness</option>
-                            <option value="news">Nachrichten</option>
-                            <option value="cloud">Cloud & Speicher</option>
-                            <option value="other">Sonstiges</option>
+                            <option value="streaming" data-i18n="catStreaming">Streaming</option>
+                            <option value="music" data-i18n="catMusic">Musik</option>
+                            <option value="software" data-i18n="catSoftware">Software</option>
+                            <option value="gaming" data-i18n="catGaming">Gaming</option>
+                            <option value="fitness" data-i18n="catFitness">Fitness</option>
+                            <option value="news" data-i18n="catNews">Nachrichten</option>
+                            <option value="cloud" data-i18n="catCloud">Cloud & Speicher</option>
+                            <option value="education" data-i18n="catEducation">Bildung</option>
+                            <option value="food" data-i18n="catFood">Essen & Lieferung</option>
+                            <option value="other" data-i18n="catOther">Sonstiges</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="sub-notes">Notizen</label>
-                        <input type="text" id="sub-notes" placeholder="Optionale Notizen...">
+                        <label for="sub-notes" data-i18n="notes">Notizen</label>
+                        <input type="text" id="sub-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Optionale Notizen...">
                     </div>
                     <div class="form-actions">
-                        <button type="button" id="modal-cancel" class="btn btn-secondary">Abbrechen</button>
-                        <button type="submit" class="btn btn-primary">Speichern</button>
+                        <button type="button" id="modal-cancel" class="btn btn-secondary" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="save">Speichern</button>
                     </div>
                 </form>
             </div>
@@ -166,30 +192,34 @@
             <div class="modal-overlay"></div>
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Einstellungen</h2>
+                    <h2 data-i18n="settingsTitle">Einstellungen</h2>
                     <button id="settings-close" class="btn-icon">✕</button>
                 </div>
                 <div class="settings-body">
                     <div class="settings-group">
-                        <h3>Daten</h3>
-                        <button id="export-btn" class="btn btn-secondary">Daten exportieren (JSON)</button>
-                        <label class="btn btn-secondary import-label">
+                        <h3 data-i18n="language">Sprache</h3>
+                        <div id="lang-picker" class="lang-picker"></div>
+                    </div>
+                    <div class="settings-group">
+                        <h3 data-i18n="data">Daten</h3>
+                        <button id="export-btn" class="btn btn-secondary" data-i18n="exportData">Daten exportieren (JSON)</button>
+                        <label class="btn btn-secondary import-label" data-i18n="importData">
                             Daten importieren
                             <input type="file" id="import-btn" accept=".json" hidden>
                         </label>
                     </div>
                     <div class="settings-group">
-                        <h3>Erinnerungen</h3>
+                        <h3 data-i18n="reminders">Erinnerungen</h3>
                         <div class="setting-row">
-                            <span>Browser-Benachrichtigungen</span>
-                            <button id="notification-toggle" class="btn btn-secondary">Aktivieren</button>
+                            <span data-i18n="browserNotifications">Browser-Benachrichtigungen</span>
+                            <button id="notification-toggle" class="btn btn-secondary" data-i18n="enable">Aktivieren</button>
                         </div>
                         <div class="setting-row">
-                            <label for="reminder-days">Tage vorher erinnern:</label>
+                            <label for="reminder-days" data-i18n="remindDaysBefore">Tage vorher erinnern:</label>
                             <select id="reminder-days">
-                                <option value="1">1 Tag</option>
-                                <option value="3" selected>3 Tage</option>
-                                <option value="7">7 Tage</option>
+                                <option value="1" data-i18n="day1">1 Tag</option>
+                                <option value="3" selected data-i18n="days3">3 Tage</option>
+                                <option value="7" data-i18n="days7">7 Tage</option>
                             </select>
                         </div>
                     </div>
@@ -198,7 +228,8 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/templates.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

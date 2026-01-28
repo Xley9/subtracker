@@ -6,8 +6,9 @@
     // ----- State -----
     let subscriptions = [];
     let editingId = null;
+    let searchQuery = "";
     let settings = {
-        theme: "light",
+        theme: "auto",
         currency: "EUR",
         reminderDays: 3,
         notificationsEnabled: false,
@@ -19,7 +20,6 @@
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => document.querySelectorAll(sel);
 
-    const elApp = $("#app");
     const elOnboarding = $("#onboarding");
     const elOnboardingStart = $("#onboarding-start");
     const elMonthlyCost = $("#monthly-cost");
@@ -37,6 +37,7 @@
     const elSubForm = $("#sub-form");
     const elTemplates = $("#templates");
     const elTemplatesSection = $("#templates-section");
+    const elTemplateSearch = $("#template-search");
     const elThemeToggle = $("#theme-toggle");
     const elLangToggle = $("#lang-toggle");
     const elSettingsToggle = $("#settings-toggle");
@@ -46,6 +47,8 @@
     const elImportBtn = $("#import-btn");
     const elNotificationToggle = $("#notification-toggle");
     const elReminderDays = $("#reminder-days");
+    const elSearchInput = $("#search-input");
+    const elLangPicker = $("#lang-picker");
 
     // Form fields
     const elSubName = $("#sub-name");
@@ -64,13 +67,47 @@
             const s = localStorage.getItem("subtracker_settings");
             if (s) settings = { ...settings, ...JSON.parse(s) };
         } catch (e) {
-            console.warn("Fehler beim Laden der Daten:", e);
+            console.warn("Error loading data:", e);
         }
     }
 
     function saveData() {
         localStorage.setItem("subtracker_subs", JSON.stringify(subscriptions));
         localStorage.setItem("subtracker_settings", JSON.stringify(settings));
+    }
+
+    // ----- i18n -----
+    function setLanguage(lang) {
+        settings.lang = lang;
+        window._currentLang = lang;
+        document.documentElement.lang = lang;
+        applyTranslations();
+        render();
+        saveData();
+        renderLangPicker();
+    }
+
+    function applyTranslations() {
+        // Text content
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+            const key = el.getAttribute("data-i18n");
+            const val = t(key);
+            if (val) el.textContent = val;
+        });
+
+        // HTML content
+        document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+            const key = el.getAttribute("data-i18n-html");
+            const val = t(key);
+            if (val) el.innerHTML = val;
+        });
+
+        // Placeholders
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+            const key = el.getAttribute("data-i18n-placeholder");
+            const val = t(key);
+            if (val) el.placeholder = val;
+        });
     }
 
     // ----- ID Generator -----
@@ -95,11 +132,18 @@
         }
     }
 
+    // ----- Cycle Label -----
+    function getCycleLabel(cycle) {
+        const key = cycle === "monthly" ? "monthly_cycle" : cycle === "yearly" ? "yearly_cycle" : cycle;
+        return t(key) || cycle;
+    }
+
     // ----- Date Formatting -----
     function formatDate(dateStr) {
         if (!dateStr) return "";
         const d = new Date(dateStr);
-        return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+        const locale = settings.lang === "en" ? "en-US" : settings.lang === "tr" ? "tr-TR" : settings.lang === "es" ? "es-ES" : settings.lang === "fr" ? "fr-FR" : "de-DE";
+        return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
     }
 
     function daysUntil(dateStr) {
@@ -138,10 +182,10 @@
             const next = upcoming[0];
             const days = daysUntil(next.nextDate);
             let text = `${next.name} — ${formatDate(next.nextDate)}`;
-            if (days === 0) text += " (Heute!)";
-            else if (days === 1) text += " (Morgen)";
-            else if (days > 0) text += ` (in ${days} Tagen)`;
-            else text += " (Überfällig)";
+            if (days === 0) text += ` (${t("today")})`;
+            else if (days === 1) text += ` (${t("tomorrow")})`;
+            else if (days > 0) text += ` (${t("inDays").replace("{n}", days)})`;
+            else text += ` (${t("overdue")})`;
             elNextRenewalText.textContent = text;
             elNextRenewal.classList.remove("hidden");
         } else {
@@ -150,8 +194,15 @@
     }
 
     function renderSubscriptions() {
-        // Remove old sub items (keep empty state)
         elSubscriptions.querySelectorAll(".sub-item").forEach((el) => el.remove());
+
+        const filtered = subscriptions.filter((sub) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            return sub.name.toLowerCase().includes(q) ||
+                   (sub.notes && sub.notes.toLowerCase().includes(q)) ||
+                   sub.category.toLowerCase().includes(q);
+        });
 
         if (subscriptions.length === 0) {
             elEmptyState.classList.remove("hidden");
@@ -160,15 +211,23 @@
 
         elEmptyState.classList.add("hidden");
 
-        // Sort: soonest renewal first
-        const sorted = [...subscriptions].sort((a, b) => {
+        if (filtered.length === 0) {
+            const noResults = document.createElement("div");
+            noResults.className = "empty-state sub-item-no-results";
+            noResults.innerHTML = `<p style="color: var(--text-secondary); text-align: center; width: 100%; padding: 24px;">🔍 ${searchQuery}...</p>`;
+            elSubscriptions.appendChild(noResults);
+            return;
+        }
+
+        const sorted = [...filtered].sort((a, b) => {
             if (!a.nextDate) return 1;
             if (!b.nextDate) return -1;
             return new Date(a.nextDate) - new Date(b.nextDate);
         });
 
-        sorted.forEach((sub) => {
+        sorted.forEach((sub, idx) => {
             const el = createSubElement(sub);
+            el.style.animationDelay = `${idx * 0.05}s`;
             elSubscriptions.appendChild(el);
         });
     }
@@ -180,7 +239,7 @@
 
         const icon = sub.icon || CATEGORY_ICONS[sub.category] || "📌";
         const catClass = "cat-" + sub.category;
-        const cycleLbl = CYCLE_LABELS[sub.cycle] || sub.cycle;
+        const cycleLbl = getCycleLabel(sub.cycle);
         const renewalInfo = sub.nextDate ? formatDate(sub.nextDate) : "";
 
         div.innerHTML = `
@@ -189,13 +248,13 @@
                 <div class="sub-name">${escapeHtml(sub.name)}</div>
                 <div class="sub-meta">${cycleLbl}${renewalInfo ? " · " + renewalInfo : ""}</div>
             </div>
-            <div>
+            <div class="sub-price-wrapper">
                 <span class="sub-price">${formatPrice(sub.price, sub.currency)}</span>
                 <span class="sub-cycle-label">/ ${cycleLbl}</span>
             </div>
             <div class="sub-actions">
-                <button class="edit-btn" title="Bearbeiten">✏️</button>
-                <button class="delete-btn" title="Löschen">🗑️</button>
+                <button class="edit-btn" title="${t("edit")}">✏️</button>
+                <button class="delete-btn" title="${t("delete")}">🗑️</button>
             </div>
         `;
 
@@ -214,11 +273,13 @@
     // ----- Modal -----
     function openAddModal() {
         editingId = null;
-        elModalTitle.textContent = "Abo hinzufügen";
+        elModalTitle.textContent = t("addSubTitle");
         elTemplatesSection.classList.remove("hidden");
         elSubForm.reset();
         elSubCurrency.value = settings.currency;
         elSubDate.value = "";
+        elTemplateSearch.value = "";
+        renderTemplates();
         elModal.classList.remove("hidden");
     }
 
@@ -227,7 +288,7 @@
         if (!sub) return;
 
         editingId = id;
-        elModalTitle.textContent = "Abo bearbeiten";
+        elModalTitle.textContent = t("editSubTitle");
         elTemplatesSection.classList.add("hidden");
 
         elSubName.value = sub.name;
@@ -262,9 +323,8 @@
             icon: null,
         };
 
-        // Check if template has icon
         const template = SUB_TEMPLATES.find(
-            (t) => t.name.toLowerCase() === sub.name.toLowerCase()
+            (tmpl) => tmpl.name.toLowerCase() === sub.name.toLowerCase()
         );
         if (template) sub.icon = template.icon;
 
@@ -282,39 +342,53 @@
     }
 
     function deleteSub(id) {
-        if (!confirm("Abo wirklich löschen?")) return;
+        if (!confirm(t("confirmDelete"))) return;
         subscriptions = subscriptions.filter((s) => s.id !== id);
         saveData();
         render();
     }
 
     // ----- Templates -----
-    function renderTemplates() {
+    function renderTemplates(filter) {
         elTemplates.innerHTML = "";
-        SUB_TEMPLATES.forEach((t) => {
+        const q = (filter || "").toLowerCase();
+        const filtered = q
+            ? SUB_TEMPLATES.filter((tmpl) => tmpl.name.toLowerCase().includes(q))
+            : SUB_TEMPLATES;
+
+        filtered.forEach((tmpl) => {
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "template-btn";
-            btn.innerHTML = `<span>${t.icon}</span> ${t.name}`;
+            btn.innerHTML = `<span>${tmpl.icon}</span> ${tmpl.name}`;
             btn.addEventListener("click", () => {
-                elSubName.value = t.name;
-                elSubPrice.value = t.price;
-                elSubCycle.value = t.cycle;
-                elSubCategory.value = t.category;
-                elSubName.focus();
+                elSubName.value = tmpl.name;
+                elSubPrice.value = tmpl.price;
+                elSubCycle.value = tmpl.cycle;
+                elSubCategory.value = tmpl.category;
+                elSubPrice.focus();
             });
             elTemplates.appendChild(btn);
         });
     }
 
     // ----- Theme -----
+    function getEffectiveTheme() {
+        if (settings.theme === "auto") {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        return settings.theme;
+    }
+
     function applyTheme() {
-        document.documentElement.setAttribute("data-theme", settings.theme);
-        elThemeToggle.textContent = settings.theme === "dark" ? "☀️" : "🌙";
+        const effective = getEffectiveTheme();
+        document.documentElement.setAttribute("data-theme", effective);
+        elThemeToggle.textContent = effective === "dark" ? "☀️" : "🌙";
     }
 
     function toggleTheme() {
-        settings.theme = settings.theme === "dark" ? "light" : "dark";
+        const current = getEffectiveTheme();
+        settings.theme = current === "dark" ? "light" : "dark";
         applyTheme();
         saveData();
     }
@@ -328,8 +402,11 @@
             if (!sub.nextDate) return;
             const days = daysUntil(sub.nextDate);
             if (days >= 0 && days <= settings.reminderDays) {
-                new Notification("SubTracker Erinnerung", {
-                    body: `${sub.name} verlängert sich in ${days} Tag(en) für ${formatPrice(sub.price, sub.currency)}`,
+                new Notification("SubTracker", {
+                    body: t("reminderBody")
+                        .replace("{name}", sub.name)
+                        .replace("{days}", days)
+                        .replace("{price}", formatPrice(sub.price, sub.currency)),
                     icon: "img/favicon.svg",
                 });
             }
@@ -338,7 +415,7 @@
 
     async function toggleNotifications() {
         if (!("Notification" in window)) {
-            alert("Dein Browser unterstützt keine Benachrichtigungen.");
+            alert(t("noNotifications"));
             return;
         }
 
@@ -348,7 +425,7 @@
             const perm = await Notification.requestPermission();
             settings.notificationsEnabled = perm === "granted";
         } else {
-            alert("Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen aktivieren.");
+            alert(t("notificationsBlocked"));
             return;
         }
 
@@ -358,8 +435,8 @@
 
     function updateNotificationButton() {
         elNotificationToggle.textContent = settings.notificationsEnabled
-            ? "Deaktivieren"
-            : "Aktivieren";
+            ? t("disable")
+            : t("enable");
     }
 
     // ----- Export / Import -----
@@ -388,19 +465,20 @@
             try {
                 const data = JSON.parse(ev.target.result);
                 if (data.subscriptions && Array.isArray(data.subscriptions)) {
-                    if (confirm(`${data.subscriptions.length} Abos importieren? Aktuelle Daten werden ersetzt.`)) {
+                    if (confirm(t("confirmImport").replace("{n}", data.subscriptions.length))) {
                         subscriptions = data.subscriptions;
                         if (data.settings) settings = { ...settings, ...data.settings };
                         saveData();
+                        setLanguage(settings.lang);
                         render();
                         applyTheme();
-                        alert("Import erfolgreich!");
+                        alert(t("importSuccess"));
                     }
                 } else {
-                    alert("Ungültige Datei.");
+                    alert(t("invalidFile"));
                 }
             } catch {
-                alert("Fehler beim Lesen der Datei.");
+                alert(t("fileError"));
             }
         };
         reader.readAsText(file);
@@ -412,10 +490,24 @@
         elSettingsModal.classList.remove("hidden");
         updateNotificationButton();
         elReminderDays.value = settings.reminderDays;
+        renderLangPicker();
     }
 
     function closeSettings() {
         elSettingsModal.classList.add("hidden");
+    }
+
+    // ----- Language Picker -----
+    function renderLangPicker() {
+        elLangPicker.innerHTML = "";
+        getAvailableLanguages().forEach((lang) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "lang-btn" + (settings.lang === lang.code ? " active" : "");
+            btn.innerHTML = `<span>${lang.flag}</span> ${lang.name}`;
+            btn.addEventListener("click", () => setLanguage(lang.code));
+            elLangPicker.appendChild(btn);
+        });
     }
 
     // ----- Onboarding -----
@@ -431,6 +523,12 @@
         saveData();
     }
 
+    // ----- Search -----
+    function handleSearch() {
+        searchQuery = elSearchInput.value.trim();
+        renderSubscriptions();
+    }
+
     // ----- Event Listeners -----
     function bindEvents() {
         elAddSubBtn.addEventListener("click", openAddModal);
@@ -438,12 +536,18 @@
         elModalCancel.addEventListener("click", closeModal);
         elSubForm.addEventListener("submit", saveSub);
         elThemeToggle.addEventListener("click", toggleTheme);
+        elLangToggle.addEventListener("click", openSettings);
         elSettingsToggle.addEventListener("click", openSettings);
         elSettingsClose.addEventListener("click", closeSettings);
         elExportBtn.addEventListener("click", exportData);
         elImportBtn.addEventListener("click", importData);
         elNotificationToggle.addEventListener("click", toggleNotifications);
         elOnboardingStart.addEventListener("click", finishOnboarding);
+        elSearchInput.addEventListener("input", handleSearch);
+
+        elTemplateSearch.addEventListener("input", () => {
+            renderTemplates(elTemplateSearch.value);
+        });
 
         elReminderDays.addEventListener("change", () => {
             settings.reminderDays = parseInt(elReminderDays.value);
@@ -465,21 +569,19 @@
                 closeSettings();
             }
         });
-    }
 
-    // ----- Auto-detect theme -----
-    function detectTheme() {
-        if (localStorage.getItem("subtracker_settings")) return;
-        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            settings.theme = "dark";
-        }
+        // Listen for system theme changes
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+            if (settings.theme === "auto") applyTheme();
+        });
     }
 
     // ----- Init -----
     function init() {
-        detectTheme();
         loadData();
+        window._currentLang = settings.lang;
         applyTheme();
+        applyTranslations();
         renderTemplates();
         render();
         checkOnboarding();
