@@ -202,21 +202,9 @@ body {
     padding: 20px 16px;
     text-align: center;
     box-shadow: var(--shadow);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid var(--border);
-    animation: fadeIn 0.4s ease forwards;
-}
-
-.summary-card:first-child {
-    animation-delay: 0s;
-}
-
-.summary-card:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.summary-card:nth-child(3) {
-    animation-delay: 0.2s;
+    color: var(--text);
 }
 
 .summary-card:hover {
@@ -293,7 +281,6 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    animation: fadeIn 0.4s ease forwards;
 }
 
 .next-renewal-icon {
@@ -327,9 +314,8 @@ body {
     display: flex;
     align-items: center;
     gap: 14px;
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
-    animation: slideUp 0.3s ease forwards;
+    transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    border: 1px solid var(--border);
     cursor: default;
     color: var(--text);
 }
@@ -368,12 +354,12 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--text);
+    color: var(--text) !important;
 }
 
 .sub-meta {
     font-size: 0.78rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     margin-top: 3px;
 }
 
@@ -385,12 +371,12 @@ body {
 .sub-price {
     font-weight: 800;
     font-size: 1.05rem;
-    color: var(--text);
+    color: var(--text) !important;
 }
 
 .sub-cycle-label {
     font-size: 0.7rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     display: block;
     text-align: right;
     margin-top: 2px;
@@ -437,7 +423,6 @@ body {
     text-align: center;
     padding: 60px 20px;
     color: var(--text-secondary);
-    animation: fadeIn 0.5s ease;
 }
 
 .empty-state-icon {

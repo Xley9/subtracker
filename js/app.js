@@ -225,9 +225,8 @@
             return new Date(a.nextDate) - new Date(b.nextDate);
         });
 
-        sorted.forEach((sub, idx) => {
+        sorted.forEach((sub) => {
             const el = createSubElement(sub);
-            el.style.animationDelay = `${idx * 0.05}s`;
             elSubscriptions.appendChild(el);
         });
     }
