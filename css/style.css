@@ -331,6 +331,7 @@ body {
     border: 1px solid transparent;
     animation: slideUp 0.3s ease forwards;
     cursor: default;
+    color: var(--text);
 }
 
 .sub-item:hover {
@@ -367,6 +368,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text);
 }
 
 .sub-meta {
@@ -383,6 +385,7 @@ body {
 .sub-price {
     font-weight: 800;
     font-size: 1.05rem;
+    color: var(--text);
 }
 
 .sub-cycle-label {
